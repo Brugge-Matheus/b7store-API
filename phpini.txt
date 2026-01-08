@@ -1,0 +1,6 @@
+Configuration File (php.ini) Path: /usr/local/etc/php
+Loaded Configuration File:         /home/brugge-matheus/.config/herd-lite/bin/php.ini
+Scan for additional .ini files in: /home/brugge-matheus/.config/herd-lite/bin:/home/brugge-matheus/.config/herd-lite/bin:
+Additional .ini files parsed:      /home/brugge-matheus/.config/herd-lite/bin/php.ini,
+/home/brugge-matheus/.config/herd-lite/bin/php.ini
+
