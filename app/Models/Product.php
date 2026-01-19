@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
-{
+{    
     protected $fillable = [
         'label',
         'description',
@@ -26,6 +26,15 @@ class Product extends Model
     public function images():HasMany 
     {
         return $this->hasMany(ProductImage::class);
+    }
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function metadata(): HasMany {
+        return $this->hasMany(ProductMetadata::class);
     }
 
     public function price(): Attribute

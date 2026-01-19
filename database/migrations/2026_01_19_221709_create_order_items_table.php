@@ -1,6 +1,7 @@
 <?php
 
-use App\Models\Category;
+use App\Models\Order;
+use App\Models\Product;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,16 +13,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create('order_items', function (Blueprint $table) {
             $table->id();
-            $table->string('label');
-            $table->string('description');
+            $table->foreignIdFor(Product::class)->constrained();
+            $table->foreignIdFor(Order::class)->constrained();
+            $table->integer('quantity');
             $table->integer('price');
-            $table->integer('sales_count')->default(0);
-            $table->integer('views_count')->default(0);
-            $table->foreignIdFor(Category::class)->constrained()
-            ->constrained()
-            ->nullOnDelete();
             $table->timestamps();
         });
     }
@@ -31,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('order_items');
     }
 };

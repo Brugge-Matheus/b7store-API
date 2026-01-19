@@ -15,16 +15,23 @@ class ProductSeeder extends Seeder
     public function run(): void
     {
         Product::create([
-            'label' => 'Produto de exemplo',
+            'label' => 'Camiseta React native',
             'description' => 'Descrição de exemplo',
-            'price' => 10000,
+            'price' => 129,
             'category_id' => Category::inRandomOrder()->value('id')
         ]);
 
         Product::create([
-            'label' => 'Produto de exemplo 2',
+            'label' => 'Camiseta React',
             'description' => 'Descrição de exemplo 2',
-            'price' => 100000,
+            'price' => 89,
+            'category_id' => Category::inRandomOrder()->value('id')
+        ]);
+
+        Product::create([
+            'label' => 'Camiseta Laravel',
+            'description' => 'Descrição de exemplo 3',
+            'price' => 200,
             'category_id' => Category::inRandomOrder()->value('id')
         ]);
     }

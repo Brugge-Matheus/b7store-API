@@ -248,12 +248,16 @@ npm start
 
 ## Cart
 
-### `POST /cart/mount`
+### `GET /cart/mount`
 - **Description:** Get product details for a list of product IDs.
 - **Auth:** None
-- **Body:**
-  ```json
-  { "ids": [1, 2, 3] }
+- **Params:**
+  | Name | Type   | Required |
+  | ---- | ------ | -------- |
+  | ids | string | Yes      |
+- **Example:**
+  ```
+  ids=1,2,3
   ```
 - **Response:**
   ```json
