@@ -19,11 +19,48 @@ class CartController extends Controller
         path: "/api/cart/mount",
         tags: ["Cart"],
         summary: "Montar carrinho",
-        description: "Retorna informações dos produtos baseado nos IDs fornecidos"
+        description: "Retorna informações detalhadas dos produtos baseado nos IDs fornecidos. Usado para recuperar dados completos dos produtos no carrinho."
     )]
-    #[OA\Parameter(name: "ids", in: "query", required: true, description: "IDs dos produtos separados por vírgula", schema: new OA\Schema(type: "string", example: "1,2,3"))]
-    #[OA\Response(response: 200, description: "Produtos do carrinho")]
-    #[OA\Response(response: 500, description: "Erro ao buscar produtos")]
+    #[OA\Parameter(
+        name: "ids",
+        in: "query",
+        description: "IDs dos produtos separados por vírgula (ex: 1,2,3)",
+        required: true,
+        schema: new OA\Schema(type: "string", example: "1,2,3")
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Produtos do carrinho retornados com sucesso",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "null", example: null),
+                new OA\Property(
+                    property: "products",
+                    type: "array",
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: "id", type: "integer", example: 1),
+                            new OA\Property(property: "label", type: "string", example: "iPhone 14 Pro"),
+                            new OA\Property(property: "price", type: "number", format: "float", example: 5999.90),
+                            new OA\Property(property: "formatted_price", type: "string", example: "R$ 5.999,90"),
+                            new OA\Property(property: "image", type: "string", example: "http://localhost:8000/storage/media/products/iphone14.jpg")
+                        ]
+                    )
+                )
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 500,
+        description: "Erro ao buscar produtos",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "boolean", example: true),
+                new OA\Property(property: "message", type: "string", example: "Erro ao buscar informaçãoes sobre os produtos"),
+                new OA\Property(property: "details", type: "string")
+            ]
+        )
+    )]
     public function mount(CartMountRequest $request)
     {
         try {
@@ -66,11 +103,38 @@ class CartController extends Controller
         path: "/api/cart/shipping",
         tags: ["Cart"],
         summary: "Calcular frete",
-        description: "Retorna valor e prazo de entrega baseado no CEP"
+        description: "Calcula o valor do frete e prazo de entrega em dias baseado no CEP de destino"
     )]
-    #[OA\Parameter(name: "zipcode", in: "query", required: true, schema: new OA\Schema(type: "string", example: "12345-678"))]
-    #[OA\Response(response: 200, description: "Dados de frete")]
-    #[OA\Response(response: 500, description: "Erro ao buscar frete")]
+    #[OA\Parameter(
+        name: "zipcode",
+        in: "query",
+        description: "CEP de destino no formato 12345-678 ou 12345678",
+        required: true,
+        schema: new OA\Schema(type: "string", example: "12345-678")
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Dados de frete calculados com sucesso",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "null", example: null),
+                new OA\Property(property: "zipcode", type: "string", example: "12345-678"),
+                new OA\Property(property: "cost", type: "integer", example: 7, description: "Custo do frete em reais"),
+                new OA\Property(property: "days", type: "integer", example: 3, description: "Prazo de entrega em dias úteis")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 500,
+        description: "Erro ao calcular frete",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "boolean", example: true),
+                new OA\Property(property: "message", type: "string", example: "Erro ao buscar informaçãoes sobre o CEP"),
+                new OA\Property(property: "details", type: "string")
+            ]
+        )
+    )]
     public function shipping(CartShippingRequest $request)
     {
         try {
@@ -103,12 +167,59 @@ class CartController extends Controller
         path: "/api/cart/finish",
         tags: ["Cart"],
         summary: "Finalizar compra",
-        description: "Cria um pedido com os itens do carrinho",
+        description: "Cria um pedido com os itens do carrinho e retorna URL para pagamento via Stripe. Requer autenticação.",
         security: [["sanctum" => []]]
     )]
-    #[OA\Response(response: 200, description: "Pedido criado")]
-    #[OA\Response(response: 401, description: "Não autenticado")]
-    #[OA\Response(response: 500, description: "Erro ao criar pedido")]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ["cart", "addressId"],
+            properties: [
+                new OA\Property(
+                    property: "cart",
+                    type: "array",
+                    description: "Array de itens do carrinho",
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: "productId", type: "integer", example: 1),
+                            new OA\Property(property: "quantity", type: "integer", example: 2)
+                        ]
+                    )
+                ),
+                new OA\Property(property: "addressId", type: "integer", example: 1, description: "ID do endereço de entrega")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Pedido criado com sucesso e sessão de pagamento iniciada",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "null", example: null),
+                new OA\Property(property: "url", type: "string", example: "https://checkout.stripe.com/c/pay/cs_test_...", description: "URL de checkout do Stripe")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 401,
+        description: "Não autenticado",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string", example: "Unauthenticated.")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 500,
+        description: "Erro ao criar pedido",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "boolean", example: true),
+                new OA\Property(property: "message", type: "string", example: "Erro ao criar pedido"),
+                new OA\Property(property: "details", type: "string")
+            ]
+        )
+    )]
     public function finish(CartFinishRequest $request)
     {
         try {

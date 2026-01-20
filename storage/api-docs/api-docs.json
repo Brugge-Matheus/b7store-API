@@ -2,9 +2,10 @@
     "openapi": "3.0.0",
     "info": {
         "title": "B7Store API",
-        "description": "API completa para o sistema B7Store - E-commerce",
+        "description": "API REST completa para o sistema B7Store E-commerce.\n\n## 🚀 Recursos Principais\n\n- **Autenticação**: Sistema de registro e login com tokens Bearer (Sanctum)\n- **Produtos**: Catálogo completo com filtros, metadados e produtos relacionados\n- **Carrinho**: Gerenciamento de itens e cálculo de frete\n- **Pedidos**: Criação e acompanhamento de pedidos com integração Stripe\n- **Categorias**: Organização hierárquica com metadados dinâmicos\n- **Webhooks**: Integração com Stripe para atualização automática de status\n\n## 🔐 Autenticação\n\nEndpoints protegidos requerem token Bearer no header:\n\n```\nAuthorization: Bearer {seu-token}\n```\n\nObtenha seu token através do endpoint `/api/user/login`.\n\n## 🔔 Webhooks Stripe\n\nO sistema processa webhooks do Stripe no endpoint `/webhook/stripe`:\n\n- `checkout.session.completed` → Marca pedido como **paid**\n- `checkout.session.expired` → Marca pedido como **expired**\n- `payment_intent.payment_failed` → Marca pedido como **failed**\n\n**Configuração**: Stripe Dashboard → Developers → Webhooks\n\n## 📦 Status de Pedidos\n\n| Status | Descrição |\n|--------|-----------|\n| `pending` | Aguardando pagamento |\n| `paid` | Pagamento confirmado |\n| `expired` | Sessão expirada |\n| `failed` | Pagamento falhou |\n",
         "contact": {
-            "email": "suporte@b7store.com"
+            "name": "Equipe B7Store",
+            "email": "suporte@brugge.com.br"
         },
         "version": "1.0.0"
     },
@@ -25,11 +26,40 @@
                     "Banner"
                 ],
                 "summary": "Listar todos os banners",
-                "description": "Retorna lista de banners com imagens e links",
+                "description": "Retorna lista de banners promocionais com imagens e links de destino",
                 "operationId": "3a42fbbe1e4d5619e971fb8906ed0a15",
                 "responses": {
                     "200": {
-                        "description": "Lista de banners"
+                        "description": "Lista de banners retornada com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "banners": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "img": {
+                                                        "type": "string",
+                                                        "example": "http://localhost:8000/storage/media/banners/banner1.jpg"
+                                                    },
+                                                    "link": {
+                                                        "type": "string",
+                                                        "example": "https://example.com/promo"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -40,13 +70,13 @@
                     "Cart"
                 ],
                 "summary": "Montar carrinho",
-                "description": "Retorna informações dos produtos baseado nos IDs fornecidos",
+                "description": "Retorna informações detalhadas dos produtos baseado nos IDs fornecidos. Usado para recuperar dados completos dos produtos no carrinho.",
                 "operationId": "86e6ea94047f883a425b7f56030af425",
                 "parameters": [
                     {
                         "name": "ids",
                         "in": "query",
-                        "description": "IDs dos produtos separados por vírgula",
+                        "description": "IDs dos produtos separados por vírgula (ex: 1,2,3)",
                         "required": true,
                         "schema": {
                             "type": "string",
@@ -56,10 +86,72 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Produtos do carrinho"
+                        "description": "Produtos do carrinho retornados com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "products": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "label": {
+                                                        "type": "string",
+                                                        "example": "iPhone 14 Pro"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 5999.9
+                                                    },
+                                                    "formatted_price": {
+                                                        "type": "string",
+                                                        "example": "R$ 5.999,90"
+                                                    },
+                                                    "image": {
+                                                        "type": "string",
+                                                        "example": "http://localhost:8000/storage/media/products/iphone14.jpg"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "500": {
-                        "description": "Erro ao buscar produtos"
+                        "description": "Erro ao buscar produtos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erro ao buscar informaçãoes sobre os produtos"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -70,12 +162,13 @@
                     "Cart"
                 ],
                 "summary": "Calcular frete",
-                "description": "Retorna valor e prazo de entrega baseado no CEP",
+                "description": "Calcula o valor do frete e prazo de entrega em dias baseado no CEP de destino",
                 "operationId": "cc8c030b6cca3de5eb9e9f80cca54ca0",
                 "parameters": [
                     {
                         "name": "zipcode",
                         "in": "query",
+                        "description": "CEP de destino no formato 12345-678 ou 12345678",
                         "required": true,
                         "schema": {
                             "type": "string",
@@ -85,10 +178,57 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Dados de frete"
+                        "description": "Dados de frete calculados com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "zipcode": {
+                                            "type": "string",
+                                            "example": "12345-678"
+                                        },
+                                        "cost": {
+                                            "description": "Custo do frete em reais",
+                                            "type": "integer",
+                                            "example": 7
+                                        },
+                                        "days": {
+                                            "description": "Prazo de entrega em dias úteis",
+                                            "type": "integer",
+                                            "example": 3
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "500": {
-                        "description": "Erro ao buscar frete"
+                        "description": "Erro ao calcular frete",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erro ao buscar informaçãoes sobre o CEP"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -99,17 +239,106 @@
                     "Cart"
                 ],
                 "summary": "Finalizar compra",
-                "description": "Cria um pedido com os itens do carrinho",
+                "description": "Cria um pedido com os itens do carrinho e retorna URL para pagamento via Stripe. Requer autenticação.",
                 "operationId": "537f9c2ca1010e978c2355a21153367b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "cart",
+                                    "addressId"
+                                ],
+                                "properties": {
+                                    "cart": {
+                                        "description": "Array de itens do carrinho",
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "productId": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "addressId": {
+                                        "description": "ID do endereço de entrega",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Pedido criado"
+                        "description": "Pedido criado com sucesso e sessão de pagamento iniciada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "url": {
+                                            "description": "URL de checkout do Stripe",
+                                            "type": "string",
+                                            "example": "https://checkout.stripe.com/c/pay/cs_test_..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Não autenticado"
+                        "description": "Não autenticado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "500": {
-                        "description": "Erro ao criar pedido"
+                        "description": "Erro ao criar pedido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erro ao criar pedido"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -125,13 +354,13 @@
                     "Category"
                 ],
                 "summary": "Obter metadados de uma categoria",
-                "description": "Retorna informações da categoria e seus metadados com valores",
+                "description": "Retorna informações da categoria e todos os metadados disponíveis com seus valores possíveis para filtros",
                 "operationId": "a686b40c73dbbec054f5f6c4df6f6b50",
                 "parameters": [
                     {
                         "name": "slug",
                         "in": "path",
-                        "description": "Slug da categoria",
+                        "description": "Slug identificador da categoria",
                         "required": true,
                         "schema": {
                             "type": "string",
@@ -141,10 +370,121 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Metadados da categoria"
+                        "description": "Metadados da categoria retornados com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "category": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Smartphones"
+                                                },
+                                                "slug": {
+                                                    "type": "string",
+                                                    "example": "smartphones"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "metadata": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Marca"
+                                                    },
+                                                    "values": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 5
+                                                                },
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "example": "Apple"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "500": {
-                        "description": "Erro ao listar metadados"
+                        "description": "Erro ao buscar metadados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erro ao listar metadados"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/ping": {
+            "get": {
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health check",
+                "description": "Endpoint de verificação de saúde da API. Útil para monitoramento e testes de conectividade.",
+                "operationId": "49dea052cc383a83ec2a17446cd9ff46",
+                "responses": {
+                    "200": {
+                        "description": "API está online e funcionando",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "pong": {
+                                            "description": "Sempre retorna true quando a API está operacional",
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -154,18 +494,96 @@
                 "tags": [
                     "Order"
                 ],
-                "summary": "Listar pedidos",
-                "description": "Retorna todos os pedidos do usuário autenticado",
+                "summary": "Listar pedidos do usuário",
+                "description": "Retorna todos os pedidos do usuário autenticado com informações básicas",
                 "operationId": "2e0a787dfc4b1239185f92b95e14cbb9",
                 "responses": {
                     "200": {
-                        "description": "Lista de pedidos"
+                        "description": "Lista de pedidos retornada com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "orders": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "pending",
+                                                            "paid",
+                                                            "expired",
+                                                            "failed"
+                                                        ],
+                                                        "example": "pending"
+                                                    },
+                                                    "total": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 199.99
+                                                    },
+                                                    "createdAt": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-07-24T18:49:43.000Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Não autenticado"
+                        "description": "Não autenticado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "500": {
-                        "description": "Erro ao buscar pedidos"
+                        "description": "Erro ao buscar pedidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erro ao buscar pedidos"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -180,13 +598,14 @@
                 "tags": [
                     "Order"
                 ],
-                "summary": "Detalhes do pedido",
-                "description": "Retorna informações completas de um pedido específico",
+                "summary": "Obter detalhes do pedido",
+                "description": "Retorna informações completas de um pedido específico incluindo itens, endereço de entrega e dados do usuário",
                 "operationId": "1003deedfe383a0f9d1479021de16297",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ID do pedido",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -196,13 +615,163 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Detalhes do pedido"
+                        "description": "Detalhes do pedido retornados com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "order": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "pending"
+                                                },
+                                                "total": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 199.99
+                                                },
+                                                "shippingCoast": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 7
+                                                },
+                                                "shippingDays": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "shippingZipcode": {
+                                                    "type": "string",
+                                                    "example": "12345-678"
+                                                },
+                                                "shippingStreet": {
+                                                    "type": "string",
+                                                    "example": "Rua das Flores"
+                                                },
+                                                "shippingNumber": {
+                                                    "type": "string",
+                                                    "example": "123"
+                                                },
+                                                "shippingCity": {
+                                                    "type": "string",
+                                                    "example": "São Paulo"
+                                                },
+                                                "shippingState": {
+                                                    "type": "string",
+                                                    "example": "SP"
+                                                },
+                                                "shippingCountry": {
+                                                    "type": "string",
+                                                    "example": "Brasil"
+                                                },
+                                                "shippingComplement": {
+                                                    "type": "string",
+                                                    "example": "Apto 42"
+                                                },
+                                                "user": {
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "João Silva"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "joao@example.com"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "orderItems": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "quantity": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "price": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 99.99
+                                                            },
+                                                            "product": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "label": {
+                                                                        "type": "string",
+                                                                        "example": "iPhone 14 Pro"
+                                                                    },
+                                                                    "price": {
+                                                                        "type": "number",
+                                                                        "format": "float",
+                                                                        "example": 99.99
+                                                                    },
+                                                                    "image": {
+                                                                        "type": "string",
+                                                                        "example": "http://localhost:8000/storage/media/products/iphone14.jpg"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Não autenticado"
+                        "description": "Não autenticado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Pedido não encontrado"
+                        "description": "Pedido não encontrado ou não pertence ao usuário",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pedido não encontrado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -212,38 +781,69 @@
                 ]
             }
         },
-        "/api/order/{id}/session": {
+        "/api/order/session": {
             "get": {
                 "tags": [
                     "Order"
                 ],
-                "summary": "Obter sessão de pagamento Stripe",
-                "description": "Retorna informações da sessão de pagamento",
-                "operationId": "6fe9c16d70d7c7dfc2ff57231d0a939c",
+                "summary": "Obter pedido por sessão Stripe",
+                "description": "Retorna o ID do pedido baseado no session_id do checkout Stripe. Usado após pagamento.",
+                "operationId": "7be44ecd749ce3e06be7c0c21067266f",
                 "parameters": [
                     {
-                        "name": "id",
-                        "in": "path",
+                        "name": "session_id",
+                        "in": "query",
+                        "description": "ID da sessão de checkout do Stripe",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "example": "cs_test_a1b2c3d4e5f6g7h8i9j0..."
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Sessão criada"
+                        "description": "ID do pedido retornado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "orderId": {
+                                            "description": "ID do pedido associado à sessão",
+                                            "type": "integer",
+                                            "example": 123
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
-                    "401": {
-                        "description": "Não autenticado"
+                    "404": {
+                        "description": "Pedido não encontrado para a sessão fornecida",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pedido não encontrado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
+                }
             }
         },
         "/api/product": {
@@ -252,21 +852,29 @@
                     "Product"
                 ],
                 "summary": "Listar produtos",
-                "description": "Retorna lista de produtos com filtros opcionais",
+                "description": "Retorna lista de produtos com filtros opcionais de ordenação, limite e metadados",
                 "operationId": "5cc57bec35d0f2045983cc8dcd00eccd",
                 "parameters": [
                     {
                         "name": "orderby",
                         "in": "query",
-                        "description": "Ordenar por: views, selling, price",
+                        "description": "Ordenar produtos por: 'views' (mais vistos), 'selling' (mais vendidos), 'price' (preço)",
+                        "required": false,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                                "views",
+                                "selling",
+                                "price"
+                            ],
+                            "example": "views"
                         }
                     },
                     {
                         "name": "limit",
                         "in": "query",
-                        "description": "Limite de resultados",
+                        "description": "Número máximo de produtos a retornar",
+                        "required": false,
                         "schema": {
                             "type": "integer",
                             "example": 10
@@ -275,18 +883,87 @@
                     {
                         "name": "metadata",
                         "in": "query",
-                        "description": "Filtro JSON de metadados",
+                        "description": "Filtro JSON de metadados no formato: {\"metadata_id\": \"value_id\"}",
+                        "required": false,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "{\"1\": \"5\"}"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista de produtos"
+                        "description": "Lista de produtos retornada com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "products": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "label": {
+                                                        "type": "string",
+                                                        "example": "iPhone 14 Pro"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 5999.9
+                                                    },
+                                                    "formatted_price": {
+                                                        "type": "string",
+                                                        "example": "R$ 5.999,90"
+                                                    },
+                                                    "image": {
+                                                        "type": "string",
+                                                        "example": "http://localhost:8000/storage/media/products/iphone14.jpg"
+                                                    },
+                                                    "liked": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "500": {
-                        "description": "Erro ao listar produtos"
+                        "description": "Erro ao listar produtos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erro ao listar produtos"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": "Database connection failed"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -296,13 +973,14 @@
                 "tags": [
                     "Product"
                 ],
-                "summary": "Detalhes do produto",
-                "description": "Retorna informações completas de um produto e incrementa contador de visualizações",
+                "summary": "Obter detalhes do produto",
+                "description": "Retorna informações completas de um produto específico incluindo categoria e todas as imagens. Incrementa o contador de visualizações.",
                 "operationId": "2768d88590e39a7ded1d0032e64dded7",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ID do produto",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -312,10 +990,93 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Detalhes do produto"
+                        "description": "Detalhes do produto retornados com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "product": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "label": {
+                                                    "type": "string",
+                                                    "example": "iPhone 14 Pro"
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 5999.9
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Smartphone Apple com chip A16 Bionic"
+                                                },
+                                                "categoryId": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "images": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "http://localhost:8000/storage/media/products/iphone14-1.jpg"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "category": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Smartphones"
+                                                },
+                                                "slug": {
+                                                    "type": "string",
+                                                    "example": "smartphones"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "500": {
-                        "description": "Erro ao listar produto"
+                        "description": "Erro ao buscar produto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erro ao listar produto"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -325,13 +1086,14 @@
                 "tags": [
                     "Product"
                 ],
-                "summary": "Produtos relacionados",
-                "description": "Retorna produtos da mesma categoria, excluindo o produto atual",
+                "summary": "Listar produtos relacionados",
+                "description": "Retorna produtos da mesma categoria do produto especificado, excluindo o próprio produto",
                 "operationId": "b1d0ce6f696eceaab1200fa9dd0ae7b7",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ID do produto de referência",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -341,6 +1103,8 @@
                     {
                         "name": "limit",
                         "in": "query",
+                        "description": "Número máximo de produtos relacionados a retornar",
+                        "required": false,
                         "schema": {
                             "type": "integer",
                             "example": 4
@@ -349,10 +1113,76 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista de produtos relacionados"
+                        "description": "Lista de produtos relacionados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "products": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "label": {
+                                                        "type": "string",
+                                                        "example": "iPhone 13"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 4999.9
+                                                    },
+                                                    "formatted_price": {
+                                                        "type": "string",
+                                                        "example": "R$ 4.999,90"
+                                                    },
+                                                    "image": {
+                                                        "type": "string",
+                                                        "example": "http://localhost:8000/storage/media/products/iphone13.jpg"
+                                                    },
+                                                    "liked": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "500": {
-                        "description": "Erro ao listar produtos relacionados"
+                        "description": "Erro ao listar produtos relacionados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erro ao listar produtos relacionados"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -363,7 +1193,7 @@
                     "User"
                 ],
                 "summary": "Registrar novo usuário",
-                "description": "Cria um novo usuário no sistema",
+                "description": "Cria uma nova conta de usuário no sistema",
                 "operationId": "d03ee3a44bdd6f0025efd14c5c76b5ae",
                 "requestBody": {
                     "required": true,
@@ -377,15 +1207,18 @@
                                 ],
                                 "properties": {
                                     "name": {
+                                        "description": "Nome completo do usuário",
                                         "type": "string",
                                         "example": "João Silva"
                                     },
                                     "email": {
+                                        "description": "Email único do usuário",
                                         "type": "string",
                                         "format": "email",
                                         "example": "joao@example.com"
                                     },
                                     "password": {
+                                        "description": "Senha de acesso",
                                         "type": "string",
                                         "format": "password",
                                         "example": "senha123"
@@ -398,10 +1231,60 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Usuário criado com sucesso"
+                        "description": "Usuário criado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "João Silva"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "joao@example.com"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "500": {
-                        "description": "Erro ao criar usuário"
+                        "description": "Erro ao criar usuário",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erro ao criar usuário"
+                                        },
+                                        "details": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -412,7 +1295,7 @@
                     "User"
                 ],
                 "summary": "Login de usuário",
-                "description": "Autentica usuário e retorna token Bearer",
+                "description": "Autentica usuário e retorna token Bearer para usar nas requisições autenticadas. O token expira em 7 dias.",
                 "operationId": "9f6f4aca790a5229fb638e798623c6e0",
                 "requestBody": {
                     "required": true,
@@ -442,10 +1325,45 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Login realizado com sucesso"
+                        "description": "Login realizado com sucesso, token retornado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "token": {
+                                            "description": "Token Bearer para autenticação",
+                                            "type": "string",
+                                            "example": "1|abcdef123456..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Credenciais inválidas"
+                        "description": "Credenciais inválidas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "E-mail ou senha inválidos"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -456,14 +1374,80 @@
                     "User"
                 ],
                 "summary": "Listar endereços",
-                "description": "Retorna todos os endereços do usuário autenticado",
+                "description": "Retorna todos os endereços de entrega cadastrados pelo usuário autenticado",
                 "operationId": "5538c6eded480ef3d257133a81eb1076",
                 "responses": {
                     "200": {
-                        "description": "Lista de endereços"
+                        "description": "Lista de endereços retornada com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "addresses": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "zipcode": {
+                                                        "type": "string",
+                                                        "example": "12345-678"
+                                                    },
+                                                    "street": {
+                                                        "type": "string",
+                                                        "example": "Rua das Flores"
+                                                    },
+                                                    "number": {
+                                                        "type": "string",
+                                                        "example": "123"
+                                                    },
+                                                    "city": {
+                                                        "type": "string",
+                                                        "example": "São Paulo"
+                                                    },
+                                                    "state": {
+                                                        "type": "string",
+                                                        "example": "SP"
+                                                    },
+                                                    "country": {
+                                                        "type": "string",
+                                                        "example": "Brasil"
+                                                    },
+                                                    "complement": {
+                                                        "type": "string",
+                                                        "example": "Apto 42"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Não autenticado"
+                        "description": "Não autenticado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -477,7 +1461,7 @@
                     "User"
                 ],
                 "summary": "Adicionar endereço",
-                "description": "Cadastra um novo endereço para o usuário autenticado",
+                "description": "Cadastra um novo endereço de entrega para o usuário autenticado",
                 "operationId": "434614f3c629c07413f55f571964902e",
                 "requestBody": {
                     "required": true,
@@ -493,26 +1477,37 @@
                                 ],
                                 "properties": {
                                     "zipcode": {
+                                        "description": "CEP do endereço",
                                         "type": "string",
                                         "example": "12345-678"
                                     },
                                     "street": {
+                                        "description": "Nome da rua",
                                         "type": "string",
-                                        "example": "Rua das Flores, 123"
+                                        "example": "Rua das Flores"
+                                    },
+                                    "number": {
+                                        "description": "Número do endereço",
+                                        "type": "string",
+                                        "example": "123"
                                     },
                                     "city": {
+                                        "description": "Cidade",
                                         "type": "string",
                                         "example": "São Paulo"
                                     },
                                     "state": {
+                                        "description": "Estado (sigla)",
                                         "type": "string",
                                         "example": "SP"
                                     },
                                     "country": {
+                                        "description": "País",
                                         "type": "string",
                                         "example": "Brasil"
                                     },
                                     "complement": {
+                                        "description": "Complemento (opcional)",
                                         "type": "string",
                                         "example": "Apto 42"
                                     }
@@ -524,10 +1519,73 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Endereço cadastrado"
+                        "description": "Endereço cadastrado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "address": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "zipcode": {
+                                                    "type": "string",
+                                                    "example": "12345-678"
+                                                },
+                                                "street": {
+                                                    "type": "string",
+                                                    "example": "Rua das Flores"
+                                                },
+                                                "number": {
+                                                    "type": "string",
+                                                    "example": "123"
+                                                },
+                                                "city": {
+                                                    "type": "string",
+                                                    "example": "São Paulo"
+                                                },
+                                                "state": {
+                                                    "type": "string",
+                                                    "example": "SP"
+                                                },
+                                                "country": {
+                                                    "type": "string",
+                                                    "example": "Brasil"
+                                                },
+                                                "complement": {
+                                                    "type": "string",
+                                                    "example": "Apto 42"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Não autenticado"
+                        "description": "Não autenticado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -550,6 +1608,10 @@
     },
     "tags": [
         {
+            "name": "Health",
+            "description": "Endpoints de monitoramento e saúde da API"
+        },
+        {
             "name": "Banner",
             "description": "Gerenciamento de banners promocionais"
         },
@@ -559,19 +1621,19 @@
         },
         {
             "name": "Category",
-            "description": "Gerenciamento de categorias"
+            "description": "Gerenciamento de categorias e metadados"
         },
         {
             "name": "Cart",
-            "description": "Carrinho de compras"
+            "description": "Operações do carrinho de compras e finalização"
         },
         {
             "name": "User",
-            "description": "Gerenciamento de usuários e autenticação"
+            "description": "Autenticação e gerenciamento de usuários"
         },
         {
             "name": "Order",
-            "description": "Gerenciamento de pedidos"
+            "description": "Consulta e gerenciamento de pedidos"
         }
     ]
 }

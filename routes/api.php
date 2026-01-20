@@ -3,6 +3,7 @@
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
@@ -48,11 +49,7 @@ Route::middleware('auth:sanctum')->prefix('order')->group(function() {
     Route::get('/{id}/session', [OrderController::class, 'stripeSession'])->name('order.stripeSession');
 });
 
-Route::get('/ping', function() {
-    return response()->json([
-        'pong' => true
-    ]);
-});
+Route::get('/ping', [HealthController::class, 'ping'])->name('health.ping');
 
 Route::fallback(function() {
     return response()->json([

@@ -18,21 +18,48 @@ class UserController extends Controller
         path: "/api/user/register",
         tags: ["User"],
         summary: "Registrar novo usuário",
-        description: "Cria um novo usuário no sistema"
+        description: "Cria uma nova conta de usuário no sistema"
     )]
     #[OA\RequestBody(
         required: true,
         content: new OA\JsonContent(
             required: ["name", "email", "password"],
             properties: [
-                new OA\Property(property: "name", type: "string", example: "João Silva"),
-                new OA\Property(property: "email", type: "string", format: "email", example: "joao@example.com"),
-                new OA\Property(property: "password", type: "string", format: "password", example: "senha123")
+                new OA\Property(property: "name", type: "string", example: "João Silva", description: "Nome completo do usuário"),
+                new OA\Property(property: "email", type: "string", format: "email", example: "joao@example.com", description: "Email único do usuário"),
+                new OA\Property(property: "password", type: "string", format: "password", example: "senha123", description: "Senha de acesso")
             ]
         )
     )]
-    #[OA\Response(response: 201, description: "Usuário criado com sucesso")]
-    #[OA\Response(response: 500, description: "Erro ao criar usuário")]
+    #[OA\Response(
+        response: 201,
+        description: "Usuário criado com sucesso",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "null", example: null),
+                new OA\Property(
+                    property: "user",
+                    properties: [
+                        new OA\Property(property: "id", type: "integer", example: 1),
+                        new OA\Property(property: "name", type: "string", example: "João Silva"),
+                        new OA\Property(property: "email", type: "string", example: "joao@example.com")
+                    ],
+                    type: "object"
+                )
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 500,
+        description: "Erro ao criar usuário",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "boolean", example: true),
+                new OA\Property(property: "message", type: "string", example: "Erro ao criar usuário"),
+                new OA\Property(property: "details", type: "string")
+            ]
+        )
+    )]
     public function register(UserRegisterRequest $request) {
         try {
             $params = $request->validated();
@@ -65,7 +92,7 @@ class UserController extends Controller
         path: "/api/user/login",
         tags: ["User"],
         summary: "Login de usuário",
-        description: "Autentica usuário e retorna token Bearer"
+        description: "Autentica usuário e retorna token Bearer para usar nas requisições autenticadas. O token expira em 7 dias."
     )]
     #[OA\RequestBody(
         required: true,
@@ -77,8 +104,26 @@ class UserController extends Controller
             ]
         )
     )]
-    #[OA\Response(response: 200, description: "Login realizado com sucesso")]
-    #[OA\Response(response: 401, description: "Credenciais inválidas")]
+    #[OA\Response(
+        response: 200,
+        description: "Login realizado com sucesso, token retornado",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "null", example: null),
+                new OA\Property(property: "token", type: "string", example: "1|abcdef123456...", description: "Token Bearer para autenticação")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 401,
+        description: "Credenciais inválidas",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "boolean", example: true),
+                new OA\Property(property: "message", type: "string", example: "E-mail ou senha inválidos")
+            ]
+        )
+    )]
     public function login(UserAuthRequest $request)
     {
         try {
@@ -115,7 +160,7 @@ class UserController extends Controller
         path: "/api/user/addresses",
         tags: ["User"],
         summary: "Adicionar endereço",
-        description: "Cadastra um novo endereço para o usuário autenticado",
+        description: "Cadastra um novo endereço de entrega para o usuário autenticado",
         security: [["sanctum" => []]]
     )]
     #[OA\RequestBody(
@@ -123,17 +168,48 @@ class UserController extends Controller
         content: new OA\JsonContent(
             required: ["zipcode", "street", "city", "state", "country"],
             properties: [
-                new OA\Property(property: "zipcode", type: "string", example: "12345-678"),
-                new OA\Property(property: "street", type: "string", example: "Rua das Flores, 123"),
-                new OA\Property(property: "city", type: "string", example: "São Paulo"),
-                new OA\Property(property: "state", type: "string", example: "SP"),
-                new OA\Property(property: "country", type: "string", example: "Brasil"),
-                new OA\Property(property: "complement", type: "string", example: "Apto 42")
+                new OA\Property(property: "zipcode", type: "string", example: "12345-678", description: "CEP do endereço"),
+                new OA\Property(property: "street", type: "string", example: "Rua das Flores", description: "Nome da rua"),
+                new OA\Property(property: "number", type: "string", example: "123", description: "Número do endereço"),
+                new OA\Property(property: "city", type: "string", example: "São Paulo", description: "Cidade"),
+                new OA\Property(property: "state", type: "string", example: "SP", description: "Estado (sigla)"),
+                new OA\Property(property: "country", type: "string", example: "Brasil", description: "País"),
+                new OA\Property(property: "complement", type: "string", example: "Apto 42", description: "Complemento (opcional)")
             ]
         )
     )]
-    #[OA\Response(response: 200, description: "Endereço cadastrado")]
-    #[OA\Response(response: 401, description: "Não autenticado")]
+    #[OA\Response(
+        response: 200,
+        description: "Endereço cadastrado com sucesso",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "null", example: null),
+                new OA\Property(
+                    property: "address",
+                    properties: [
+                        new OA\Property(property: "id", type: "integer", example: 1),
+                        new OA\Property(property: "zipcode", type: "string", example: "12345-678"),
+                        new OA\Property(property: "street", type: "string", example: "Rua das Flores"),
+                        new OA\Property(property: "number", type: "string", example: "123"),
+                        new OA\Property(property: "city", type: "string", example: "São Paulo"),
+                        new OA\Property(property: "state", type: "string", example: "SP"),
+                        new OA\Property(property: "country", type: "string", example: "Brasil"),
+                        new OA\Property(property: "complement", type: "string", example: "Apto 42")
+                    ],
+                    type: "object"
+                )
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 401,
+        description: "Não autenticado",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string", example: "Unauthenticated.")
+            ]
+        )
+    )]
     public function addresses(UserAddressRequest $request)
     {
         try {
@@ -168,11 +244,43 @@ class UserController extends Controller
         path: "/api/user/addresses",
         tags: ["User"],
         summary: "Listar endereços",
-        description: "Retorna todos os endereços do usuário autenticado",
+        description: "Retorna todos os endereços de entrega cadastrados pelo usuário autenticado",
         security: [["sanctum" => []]]
     )]
-    #[OA\Response(response: 200, description: "Lista de endereços")]
-    #[OA\Response(response: 401, description: "Não autenticado")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista de endereços retornada com sucesso",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "null", example: null),
+                new OA\Property(
+                    property: "addresses",
+                    type: "array",
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: "id", type: "integer", example: 1),
+                            new OA\Property(property: "zipcode", type: "string", example: "12345-678"),
+                            new OA\Property(property: "street", type: "string", example: "Rua das Flores"),
+                            new OA\Property(property: "number", type: "string", example: "123"),
+                            new OA\Property(property: "city", type: "string", example: "São Paulo"),
+                            new OA\Property(property: "state", type: "string", example: "SP"),
+                            new OA\Property(property: "country", type: "string", example: "Brasil"),
+                            new OA\Property(property: "complement", type: "string", example: "Apto 42")
+                        ]
+                    )
+                )
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 401,
+        description: "Não autenticado",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string", example: "Unauthenticated.")
+            ]
+        )
+    )]
     public function getAddresses()
     {
         try {

@@ -16,13 +16,63 @@ class ProductController extends Controller
         path: "/api/product",
         tags: ["Product"],
         summary: "Listar produtos",
-        description: "Retorna lista de produtos com filtros opcionais"
+        description: "Retorna lista de produtos com filtros opcionais de ordenação, limite e metadados"
     )]
-    #[OA\Parameter(name: "orderby", in: "query", description: "Ordenar por: views, selling, price", schema: new OA\Schema(type: "string"))]
-    #[OA\Parameter(name: "limit", in: "query", description: "Limite de resultados", schema: new OA\Schema(type: "integer", example: 10))]
-    #[OA\Parameter(name: "metadata", in: "query", description: "Filtro JSON de metadados", schema: new OA\Schema(type: "string"))]
-    #[OA\Response(response: 200, description: "Lista de produtos")]
-    #[OA\Response(response: 500, description: "Erro ao listar produtos")]
+    #[OA\Parameter(
+        name: "orderby",
+        in: "query",
+        description: "Ordenar produtos por: 'views' (mais vistos), 'selling' (mais vendidos), 'price' (preço)",
+        required: false,
+        schema: new OA\Schema(type: "string", enum: ["views", "selling", "price"], example: "views")
+    )]
+    #[OA\Parameter(
+        name: "limit",
+        in: "query",
+        description: "Número máximo de produtos a retornar",
+        required: false,
+        schema: new OA\Schema(type: "integer", example: 10)
+    )]
+    #[OA\Parameter(
+        name: "metadata",
+        in: "query",
+        description: "Filtro JSON de metadados no formato: {\"metadata_id\": \"value_id\"}",
+        required: false,
+        schema: new OA\Schema(type: "string", example: '{"1": "5"}')
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Lista de produtos retornada com sucesso",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "null", example: null),
+                new OA\Property(
+                    property: "products",
+                    type: "array",
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: "id", type: "integer", example: 1),
+                            new OA\Property(property: "label", type: "string", example: "iPhone 14 Pro"),
+                            new OA\Property(property: "price", type: "number", format: "float", example: 5999.90),
+                            new OA\Property(property: "formatted_price", type: "string", example: "R$ 5.999,90"),
+                            new OA\Property(property: "image", type: "string", example: "http://localhost:8000/storage/media/products/iphone14.jpg"),
+                            new OA\Property(property: "liked", type: "boolean", example: false)
+                        ]
+                    )
+                )
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 500,
+        description: "Erro ao listar produtos",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "boolean", example: true),
+                new OA\Property(property: "message", type: "string", example: "Erro ao listar produtos"),
+                new OA\Property(property: "details", type: "string", example: "Database connection failed")
+            ]
+        )
+    )]
     public function index(ProductIndexRequest $request)
     {
         try {
@@ -84,12 +134,61 @@ class ProductController extends Controller
     #[OA\Get(
         path: "/api/product/{id}",
         tags: ["Product"],
-        summary: "Detalhes do produto",
-        description: "Retorna informações completas de um produto e incrementa contador de visualizações"
+        summary: "Obter detalhes do produto",
+        description: "Retorna informações completas de um produto específico incluindo categoria e todas as imagens. Incrementa o contador de visualizações."
     )]
-    #[OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer", example: 1))]
-    #[OA\Response(response: 200, description: "Detalhes do produto")]
-    #[OA\Response(response: 500, description: "Erro ao listar produto")]
+    #[OA\Parameter(
+        name: "id",
+        in: "path",
+        description: "ID do produto",
+        required: true,
+        schema: new OA\Schema(type: "integer", example: 1)
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Detalhes do produto retornados com sucesso",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "null", example: null),
+                new OA\Property(
+                    property: "product",
+                    properties: [
+                        new OA\Property(property: "id", type: "integer", example: 1),
+                        new OA\Property(property: "label", type: "string", example: "iPhone 14 Pro"),
+                        new OA\Property(property: "price", type: "number", format: "float", example: 5999.90),
+                        new OA\Property(property: "description", type: "string", example: "Smartphone Apple com chip A16 Bionic"),
+                        new OA\Property(property: "categoryId", type: "integer", example: 1),
+                        new OA\Property(
+                            property: "images",
+                            type: "array",
+                            items: new OA\Items(type: "string", example: "http://localhost:8000/storage/media/products/iphone14-1.jpg")
+                        )
+                    ],
+                    type: "object"
+                ),
+                new OA\Property(
+                    property: "category",
+                    properties: [
+                        new OA\Property(property: "id", type: "integer", example: 1),
+                        new OA\Property(property: "name", type: "string", example: "Smartphones"),
+                        new OA\Property(property: "slug", type: "string", example: "smartphones")
+                    ],
+                    type: "object"
+                )
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 500,
+        description: "Erro ao buscar produto",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "boolean", example: true),
+                new OA\Property(property: "message", type: "string", example: "Erro ao listar produto"),
+                new OA\Property(property: "details", type: "string")
+            ]
+        )
+    )]
     public function show(ProductShowRequest $request)
     {
         try {
@@ -135,13 +234,57 @@ class ProductController extends Controller
     #[OA\Get(
         path: "/api/product/{id}/related",
         tags: ["Product"],
-        summary: "Produtos relacionados",
-        description: "Retorna produtos da mesma categoria, excluindo o produto atual"
+        summary: "Listar produtos relacionados",
+        description: "Retorna produtos da mesma categoria do produto especificado, excluindo o próprio produto"
     )]
-    #[OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer", example: 1))]
-    #[OA\Parameter(name: "limit", in: "query", schema: new OA\Schema(type: "integer", example: 4))]
-    #[OA\Response(response: 200, description: "Lista de produtos relacionados")]
-    #[OA\Response(response: 500, description: "Erro ao listar produtos relacionados")]
+    #[OA\Parameter(
+        name: "id",
+        in: "path",
+        description: "ID do produto de referência",
+        required: true,
+        schema: new OA\Schema(type: "integer", example: 1)
+    )]
+    #[OA\Parameter(
+        name: "limit",
+        in: "query",
+        description: "Número máximo de produtos relacionados a retornar",
+        required: false,
+        schema: new OA\Schema(type: "integer", example: 4)
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Lista de produtos relacionados",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "null", example: null),
+                new OA\Property(
+                    property: "products",
+                    type: "array",
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: "id", type: "integer", example: 2),
+                            new OA\Property(property: "label", type: "string", example: "iPhone 13"),
+                            new OA\Property(property: "price", type: "number", format: "float", example: 4999.90),
+                            new OA\Property(property: "formatted_price", type: "string", example: "R$ 4.999,90"),
+                            new OA\Property(property: "image", type: "string", example: "http://localhost:8000/storage/media/products/iphone13.jpg"),
+                            new OA\Property(property: "liked", type: "boolean", example: false)
+                        ]
+                    )
+                )
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 500,
+        description: "Erro ao listar produtos relacionados",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "boolean", example: true),
+                new OA\Property(property: "message", type: "string", example: "Erro ao listar produtos relacionados"),
+                new OA\Property(property: "details", type: "string")
+            ]
+        )
+    )]
     public function related(ProductRelatedRequest $request) 
     {
         try {

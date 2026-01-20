@@ -13,17 +13,64 @@ class CategoryController extends Controller
         path: "/api/category/{slug}/metadata",
         tags: ["Category"],
         summary: "Obter metadados de uma categoria",
-        description: "Retorna informações da categoria e seus metadados com valores"
+        description: "Retorna informações da categoria e todos os metadados disponíveis com seus valores possíveis para filtros"
     )]
     #[OA\Parameter(
         name: "slug",
         in: "path",
-        description: "Slug da categoria",
+        description: "Slug identificador da categoria",
         required: true,
         schema: new OA\Schema(type: "string", example: "smartphones")
     )]
-    #[OA\Response(response: 200, description: "Metadados da categoria")]
-    #[OA\Response(response: 500, description: "Erro ao listar metadados")]
+    #[OA\Response(
+        response: 200,
+        description: "Metadados da categoria retornados com sucesso",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "null", example: null),
+                new OA\Property(
+                    property: "category",
+                    properties: [
+                        new OA\Property(property: "id", type: "integer", example: 1),
+                        new OA\Property(property: "name", type: "string", example: "Smartphones"),
+                        new OA\Property(property: "slug", type: "string", example: "smartphones")
+                    ],
+                    type: "object"
+                ),
+                new OA\Property(
+                    property: "metadata",
+                    type: "array",
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: "id", type: "integer", example: 1),
+                            new OA\Property(property: "name", type: "string", example: "Marca"),
+                            new OA\Property(
+                                property: "values",
+                                type: "array",
+                                items: new OA\Items(
+                                    properties: [
+                                        new OA\Property(property: "id", type: "integer", example: 5),
+                                        new OA\Property(property: "label", type: "string", example: "Apple")
+                                    ]
+                                )
+                            )
+                        ]
+                    )
+                )
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 500,
+        description: "Erro ao buscar metadados",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "error", type: "boolean", example: true),
+                new OA\Property(property: "message", type: "string", example: "Erro ao listar metadados"),
+                new OA\Property(property: "details", type: "string")
+            ]
+        )
+    )]
     public function metadata(CategoryMetadataRequest $request) 
     {
         try {
