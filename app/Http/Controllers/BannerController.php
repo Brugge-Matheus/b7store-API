@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Banner;
- 
+use OpenApi\Attributes as OA;
 
 class BannerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    #[OA\Get(
+        path: "/api/banner",
+        tags: ["Banner"],
+        summary: "Listar todos os banners",
+        description: "Retorna lista de banners com imagens e links"
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Lista de banners"
+    )]
     public function index()
     {
         $banners = Banner::all();
@@ -26,37 +32,5 @@ class BannerController extends Controller
             'error' => null,
             'banners' => $response
         ]);
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
     }
 }

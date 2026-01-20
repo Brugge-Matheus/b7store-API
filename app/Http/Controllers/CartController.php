@@ -11,9 +11,19 @@ use App\Models\Order;
 use App\Models\Product;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use OpenApi\Attributes as OA;
 
 class CartController extends Controller
 {
+    #[OA\Get(
+        path: "/api/cart/mount",
+        tags: ["Cart"],
+        summary: "Montar carrinho",
+        description: "Retorna informações dos produtos baseado nos IDs fornecidos"
+    )]
+    #[OA\Parameter(name: "ids", in: "query", required: true, description: "IDs dos produtos separados por vírgula", schema: new OA\Schema(type: "string", example: "1,2,3"))]
+    #[OA\Response(response: 200, description: "Produtos do carrinho")]
+    #[OA\Response(response: 500, description: "Erro ao buscar produtos")]
     public function mount(CartMountRequest $request)
     {
         try {
@@ -52,6 +62,15 @@ class CartController extends Controller
         }
     }
 
+    #[OA\Get(
+        path: "/api/cart/shipping",
+        tags: ["Cart"],
+        summary: "Calcular frete",
+        description: "Retorna valor e prazo de entrega baseado no CEP"
+    )]
+    #[OA\Parameter(name: "zipcode", in: "query", required: true, schema: new OA\Schema(type: "string", example: "12345-678"))]
+    #[OA\Response(response: 200, description: "Dados de frete")]
+    #[OA\Response(response: 500, description: "Erro ao buscar frete")]
     public function shipping(CartShippingRequest $request)
     {
         try {
@@ -80,6 +99,16 @@ class CartController extends Controller
         }
     }
 
+    #[OA\Post(
+        path: "/api/cart/finish",
+        tags: ["Cart"],
+        summary: "Finalizar compra",
+        description: "Cria um pedido com os itens do carrinho",
+        security: [["sanctum" => []]]
+    )]
+    #[OA\Response(response: 200, description: "Pedido criado")]
+    #[OA\Response(response: 401, description: "Não autenticado")]
+    #[OA\Response(response: 500, description: "Erro ao criar pedido")]
     public function finish(CartFinishRequest $request)
     {
         try {

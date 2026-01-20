@@ -1,0 +1,577 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "B7Store API",
+        "description": "API completa para o sistema B7Store - E-commerce",
+        "contact": {
+            "email": "suporte@b7store.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000",
+            "description": "Servidor Local"
+        },
+        {
+            "url": "https://api.b7store.com",
+            "description": "Servidor de Produção"
+        }
+    ],
+    "paths": {
+        "/api/banner": {
+            "get": {
+                "tags": [
+                    "Banner"
+                ],
+                "summary": "Listar todos os banners",
+                "description": "Retorna lista de banners com imagens e links",
+                "operationId": "3a42fbbe1e4d5619e971fb8906ed0a15",
+                "responses": {
+                    "200": {
+                        "description": "Lista de banners"
+                    }
+                }
+            }
+        },
+        "/api/cart/mount": {
+            "get": {
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Montar carrinho",
+                "description": "Retorna informações dos produtos baseado nos IDs fornecidos",
+                "operationId": "86e6ea94047f883a425b7f56030af425",
+                "parameters": [
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "description": "IDs dos produtos separados por vírgula",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "1,2,3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Produtos do carrinho"
+                    },
+                    "500": {
+                        "description": "Erro ao buscar produtos"
+                    }
+                }
+            }
+        },
+        "/api/cart/shipping": {
+            "get": {
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Calcular frete",
+                "description": "Retorna valor e prazo de entrega baseado no CEP",
+                "operationId": "cc8c030b6cca3de5eb9e9f80cca54ca0",
+                "parameters": [
+                    {
+                        "name": "zipcode",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "12345-678"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dados de frete"
+                    },
+                    "500": {
+                        "description": "Erro ao buscar frete"
+                    }
+                }
+            }
+        },
+        "/api/cart/finish": {
+            "post": {
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Finalizar compra",
+                "description": "Cria um pedido com os itens do carrinho",
+                "operationId": "537f9c2ca1010e978c2355a21153367b",
+                "responses": {
+                    "200": {
+                        "description": "Pedido criado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "500": {
+                        "description": "Erro ao criar pedido"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/category/{slug}/metadata": {
+            "get": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Obter metadados de uma categoria",
+                "description": "Retorna informações da categoria e seus metadados com valores",
+                "operationId": "a686b40c73dbbec054f5f6c4df6f6b50",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "description": "Slug da categoria",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "smartphones"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Metadados da categoria"
+                    },
+                    "500": {
+                        "description": "Erro ao listar metadados"
+                    }
+                }
+            }
+        },
+        "/api/order": {
+            "get": {
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Listar pedidos",
+                "description": "Retorna todos os pedidos do usuário autenticado",
+                "operationId": "2e0a787dfc4b1239185f92b95e14cbb9",
+                "responses": {
+                    "200": {
+                        "description": "Lista de pedidos"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "500": {
+                        "description": "Erro ao buscar pedidos"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/order/{id}": {
+            "get": {
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Detalhes do pedido",
+                "description": "Retorna informações completas de um pedido específico",
+                "operationId": "1003deedfe383a0f9d1479021de16297",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalhes do pedido"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Pedido não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/order/{id}/session": {
+            "get": {
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Obter sessão de pagamento Stripe",
+                "description": "Retorna informações da sessão de pagamento",
+                "operationId": "6fe9c16d70d7c7dfc2ff57231d0a939c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sessão criada"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/product": {
+            "get": {
+                "tags": [
+                    "Product"
+                ],
+                "summary": "Listar produtos",
+                "description": "Retorna lista de produtos com filtros opcionais",
+                "operationId": "5cc57bec35d0f2045983cc8dcd00eccd",
+                "parameters": [
+                    {
+                        "name": "orderby",
+                        "in": "query",
+                        "description": "Ordenar por: views, selling, price",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Limite de resultados",
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    },
+                    {
+                        "name": "metadata",
+                        "in": "query",
+                        "description": "Filtro JSON de metadados",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de produtos"
+                    },
+                    "500": {
+                        "description": "Erro ao listar produtos"
+                    }
+                }
+            }
+        },
+        "/api/product/{id}": {
+            "get": {
+                "tags": [
+                    "Product"
+                ],
+                "summary": "Detalhes do produto",
+                "description": "Retorna informações completas de um produto e incrementa contador de visualizações",
+                "operationId": "2768d88590e39a7ded1d0032e64dded7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalhes do produto"
+                    },
+                    "500": {
+                        "description": "Erro ao listar produto"
+                    }
+                }
+            }
+        },
+        "/api/product/{id}/related": {
+            "get": {
+                "tags": [
+                    "Product"
+                ],
+                "summary": "Produtos relacionados",
+                "description": "Retorna produtos da mesma categoria, excluindo o produto atual",
+                "operationId": "b1d0ce6f696eceaab1200fa9dd0ae7b7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "example": 4
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de produtos relacionados"
+                    },
+                    "500": {
+                        "description": "Erro ao listar produtos relacionados"
+                    }
+                }
+            }
+        },
+        "/api/user/register": {
+            "post": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Registrar novo usuário",
+                "description": "Cria um novo usuário no sistema",
+                "operationId": "d03ee3a44bdd6f0025efd14c5c76b5ae",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "João Silva"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "joao@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "senha123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Usuário criado com sucesso"
+                    },
+                    "500": {
+                        "description": "Erro ao criar usuário"
+                    }
+                }
+            }
+        },
+        "/api/user/login": {
+            "post": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Login de usuário",
+                "description": "Autentica usuário e retorna token Bearer",
+                "operationId": "9f6f4aca790a5229fb638e798623c6e0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "joao@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "senha123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login realizado com sucesso"
+                    },
+                    "401": {
+                        "description": "Credenciais inválidas"
+                    }
+                }
+            }
+        },
+        "/api/user/addresses": {
+            "get": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Listar endereços",
+                "description": "Retorna todos os endereços do usuário autenticado",
+                "operationId": "5538c6eded480ef3d257133a81eb1076",
+                "responses": {
+                    "200": {
+                        "description": "Lista de endereços"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Adicionar endereço",
+                "description": "Cadastra um novo endereço para o usuário autenticado",
+                "operationId": "434614f3c629c07413f55f571964902e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "zipcode",
+                                    "street",
+                                    "city",
+                                    "state",
+                                    "country"
+                                ],
+                                "properties": {
+                                    "zipcode": {
+                                        "type": "string",
+                                        "example": "12345-678"
+                                    },
+                                    "street": {
+                                        "type": "string",
+                                        "example": "Rua das Flores, 123"
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "example": "São Paulo"
+                                    },
+                                    "state": {
+                                        "type": "string",
+                                        "example": "SP"
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "example": "Brasil"
+                                    },
+                                    "complement": {
+                                        "type": "string",
+                                        "example": "Apto 42"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Endereço cadastrado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "sanctum": {
+                "type": "http",
+                "description": "Token de autenticação via Laravel Sanctum. Use: Bearer {seu-token}",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Banner",
+            "description": "Gerenciamento de banners promocionais"
+        },
+        {
+            "name": "Product",
+            "description": "Gerenciamento de produtos"
+        },
+        {
+            "name": "Category",
+            "description": "Gerenciamento de categorias"
+        },
+        {
+            "name": "Cart",
+            "description": "Carrinho de compras"
+        },
+        {
+            "name": "User",
+            "description": "Gerenciamento de usuários e autenticação"
+        },
+        {
+            "name": "Order",
+            "description": "Gerenciamento de pedidos"
+        }
+    ]
+}

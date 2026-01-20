@@ -5,9 +5,25 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CategoryMetadataRequest;
 use App\Models\Category;
 use Exception;
+use OpenApi\Attributes as OA;
 
 class CategoryController extends Controller
 {
+    #[OA\Get(
+        path: "/api/category/{slug}/metadata",
+        tags: ["Category"],
+        summary: "Obter metadados de uma categoria",
+        description: "Retorna informações da categoria e seus metadados com valores"
+    )]
+    #[OA\Parameter(
+        name: "slug",
+        in: "path",
+        description: "Slug da categoria",
+        required: true,
+        schema: new OA\Schema(type: "string", example: "smartphones")
+    )]
+    #[OA\Response(response: 200, description: "Metadados da categoria")]
+    #[OA\Response(response: 500, description: "Erro ao listar metadados")]
     public function metadata(CategoryMetadataRequest $request) 
     {
         try {

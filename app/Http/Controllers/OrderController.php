@@ -8,9 +8,20 @@ use App\Models\Order;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use OpenApi\Attributes as OA;
 
 class OrderController extends Controller
 {
+    #[OA\Get(
+        path: "/api/order",
+        tags: ["Order"],
+        summary: "Listar pedidos",
+        description: "Retorna todos os pedidos do usuário autenticado",
+        security: [["sanctum" => []]]
+    )]
+    #[OA\Response(response: 200, description: "Lista de pedidos")]
+    #[OA\Response(response: 401, description: "Não autenticado")]
+    #[OA\Response(response: 500, description: "Erro ao buscar pedidos")]
     public function index()
     {
         try {
@@ -39,6 +50,17 @@ class OrderController extends Controller
         
     }
 
+    #[OA\Get(
+        path: "/api/order/{id}",
+        tags: ["Order"],
+        summary: "Detalhes do pedido",
+        description: "Retorna informações completas de um pedido específico",
+        security: [["sanctum" => []]]
+    )]
+    #[OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer", example: 1))]
+    #[OA\Response(response: 200, description: "Detalhes do pedido")]
+    #[OA\Response(response: 401, description: "Não autenticado")]
+    #[OA\Response(response: 404, description: "Pedido não encontrado")]
     public function show(OrderShowRequest $request)
     {
         try {
@@ -97,6 +119,16 @@ class OrderController extends Controller
         }
     }
 
+    #[OA\Get(
+        path: "/api/order/{id}/session",
+        tags: ["Order"],
+        summary: "Obter sessão de pagamento Stripe",
+        description: "Retorna informações da sessão de pagamento",
+        security: [["sanctum" => []]]
+    )]
+    #[OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer", example: 1))]
+    #[OA\Response(response: 200, description: "Sessão criada")]
+    #[OA\Response(response: 401, description: "Não autenticado")]
     public function stripeSession(OrderStripeSessionRequest $request)
     {
         try {

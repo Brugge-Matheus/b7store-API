@@ -8,11 +8,31 @@ use App\Http\Requests\UserAuthRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Exception;
+use OpenApi\Attributes as OA;
 
 use function Illuminate\Support\now;
 
 class UserController extends Controller
 {
+    #[OA\Post(
+        path: "/api/user/register",
+        tags: ["User"],
+        summary: "Registrar novo usuário",
+        description: "Cria um novo usuário no sistema"
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ["name", "email", "password"],
+            properties: [
+                new OA\Property(property: "name", type: "string", example: "João Silva"),
+                new OA\Property(property: "email", type: "string", format: "email", example: "joao@example.com"),
+                new OA\Property(property: "password", type: "string", format: "password", example: "senha123")
+            ]
+        )
+    )]
+    #[OA\Response(response: 201, description: "Usuário criado com sucesso")]
+    #[OA\Response(response: 500, description: "Erro ao criar usuário")]
     public function register(UserRegisterRequest $request) {
         try {
             $params = $request->validated();
@@ -41,6 +61,24 @@ class UserController extends Controller
         }
     }
 
+    #[OA\Post(
+        path: "/api/user/login",
+        tags: ["User"],
+        summary: "Login de usuário",
+        description: "Autentica usuário e retorna token Bearer"
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ["email", "password"],
+            properties: [
+                new OA\Property(property: "email", type: "string", format: "email", example: "joao@example.com"),
+                new OA\Property(property: "password", type: "string", format: "password", example: "senha123")
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: "Login realizado com sucesso")]
+    #[OA\Response(response: 401, description: "Credenciais inválidas")]
     public function login(UserAuthRequest $request)
     {
         try {
@@ -73,6 +111,29 @@ class UserController extends Controller
         }
     }
 
+    #[OA\Post(
+        path: "/api/user/addresses",
+        tags: ["User"],
+        summary: "Adicionar endereço",
+        description: "Cadastra um novo endereço para o usuário autenticado",
+        security: [["sanctum" => []]]
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ["zipcode", "street", "city", "state", "country"],
+            properties: [
+                new OA\Property(property: "zipcode", type: "string", example: "12345-678"),
+                new OA\Property(property: "street", type: "string", example: "Rua das Flores, 123"),
+                new OA\Property(property: "city", type: "string", example: "São Paulo"),
+                new OA\Property(property: "state", type: "string", example: "SP"),
+                new OA\Property(property: "country", type: "string", example: "Brasil"),
+                new OA\Property(property: "complement", type: "string", example: "Apto 42")
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: "Endereço cadastrado")]
+    #[OA\Response(response: 401, description: "Não autenticado")]
     public function addresses(UserAddressRequest $request)
     {
         try {
@@ -103,6 +164,15 @@ class UserController extends Controller
         }
     }
 
+    #[OA\Get(
+        path: "/api/user/addresses",
+        tags: ["User"],
+        summary: "Listar endereços",
+        description: "Retorna todos os endereços do usuário autenticado",
+        security: [["sanctum" => []]]
+    )]
+    #[OA\Response(response: 200, description: "Lista de endereços")]
+    #[OA\Response(response: 401, description: "Não autenticado")]
     public function getAddresses()
     {
         try {

@@ -8,12 +8,21 @@ use App\Http\Requests\ProductShowRequest;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Exception;
+use OpenApi\Attributes as OA;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    #[OA\Get(
+        path: "/api/product",
+        tags: ["Product"],
+        summary: "Listar produtos",
+        description: "Retorna lista de produtos com filtros opcionais"
+    )]
+    #[OA\Parameter(name: "orderby", in: "query", description: "Ordenar por: views, selling, price", schema: new OA\Schema(type: "string"))]
+    #[OA\Parameter(name: "limit", in: "query", description: "Limite de resultados", schema: new OA\Schema(type: "integer", example: 10))]
+    #[OA\Parameter(name: "metadata", in: "query", description: "Filtro JSON de metadados", schema: new OA\Schema(type: "string"))]
+    #[OA\Response(response: 200, description: "Lista de produtos")]
+    #[OA\Response(response: 500, description: "Erro ao listar produtos")]
     public function index(ProductIndexRequest $request)
     {
         try {
@@ -72,17 +81,15 @@ class ProductController extends Controller
         }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
+    #[OA\Get(
+        path: "/api/product/{id}",
+        tags: ["Product"],
+        summary: "Detalhes do produto",
+        description: "Retorna informações completas de um produto e incrementa contador de visualizações"
+    )]
+    #[OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer", example: 1))]
+    #[OA\Response(response: 200, description: "Detalhes do produto")]
+    #[OA\Response(response: 500, description: "Erro ao listar produto")]
     public function show(ProductShowRequest $request)
     {
         try {
@@ -125,6 +132,16 @@ class ProductController extends Controller
         }
     }
 
+    #[OA\Get(
+        path: "/api/product/{id}/related",
+        tags: ["Product"],
+        summary: "Produtos relacionados",
+        description: "Retorna produtos da mesma categoria, excluindo o produto atual"
+    )]
+    #[OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer", example: 1))]
+    #[OA\Parameter(name: "limit", in: "query", schema: new OA\Schema(type: "integer", example: 4))]
+    #[OA\Response(response: 200, description: "Lista de produtos relacionados")]
+    #[OA\Response(response: 500, description: "Erro ao listar produtos relacionados")]
     public function related(ProductRelatedRequest $request) 
     {
         try {
