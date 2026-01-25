@@ -27,10 +27,10 @@ Route::prefix('cart')->group(function() {
     Route::get('/mount',  [CartController::class, 'mount'])->name('cart.mount');
     Route::get('/shipping', [CartController::class, 'shipping'])->name('cart.shipping');
 
-    Route::middleware('auth:sanctum')->post('/finish', [CartController::class, 'finish'])->name('cart.finish'); 
+    Route::middleware('auth:sanctum')->post('/finish', [CartController::class, 'finish'])->name('cart.finish');
 });
 
-Route::prefix('user')->group(function() {  
+Route::prefix('user')->group(function() {
     Route::middleware('throttle:5,1')->group(function() {
         Route::post('/register', [UserController::class, 'register'])->name('user.register');
         Route::post('/login', [UserController::class, 'login'])
@@ -51,7 +51,7 @@ Route::middleware('auth:sanctum')->prefix('order')->group(function() {
 
 Route::get('/ping', [HealthController::class, 'ping'])->name('health.ping');
 
-Route::fallback(function() {
+Route::fallback(static function() {
     return response()->json([
         'error' => true,
         'message' => 'Rota não encontrada no sistema!'

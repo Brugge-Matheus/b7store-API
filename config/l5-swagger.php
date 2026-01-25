@@ -5,7 +5,7 @@ return [
     'documentations' => [
         'default' => [
             'api' => [
-                'title' => 'L5 Swagger UI',
+                'title' => 'Documentação B7Store',
             ],
 
             'routes' => [
@@ -274,7 +274,7 @@ return [
          */
         'ui' => [
             'display' => [
-                'dark_mode' => env('L5_SWAGGER_UI_DARK_MODE', true),
+                'dark_mode' => env('L5_SWAGGER_UI_DARK_MODE', false),
                 /*
                  * Controls the default expansion setting for the operations and tags. It can be :
                  * 'list' (expands only the tags),
